@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+    <metadata>
+        <id>Xbim.Scripting</id>
+        <version>3.0.0-Prerelease</version>
+        <title>xBIM Scripting</title>
+        <authors>xBIM team</authors>
+        <owners>Steve Lockley</owners>
+        <licenseUrl>http://xbim.codeplex.com/license</licenseUrl>
+        <projectUrl>http://xbim.codeplex.com/</projectUrl>
+        <iconUrl>http://download-codeplex.sec.s-msft.com/Download?ProjectName=xbim&amp;DownloadId=373774&amp;Build=20335</iconUrl>
+        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <description>xBIM Scripting contains the first release of the xBIMQL, BIM query and scripting Language.
+xBIM is an Open Source Toolkit for developing IFC based applications (BuildingSmart Data model). 
+It provides full support for reading and writing geometry, topology and data in accordance with the Ifc2x3 schema.
+xBIM reads and writes Ifc, IfcXMl and IfcZip formats.
+The xBIM project provides packages to convert IFC models to COBie spreadsheets in both UK and US cultures as well as a range of 3D viewing controls for use with Windows forms, WPF, WEBGL and OpenGL platforms.
+IOS and Android versions are under development.</description>
+        <summary>The .Net toolkit for developing BIM applications based on the IFC standard. Essential support for the Ifc data model</summary>
+        <releaseNotes>3.0 contains the first Nuget release of the BIM Query Language</releaseNotes>
+        <language>en-GB</language>
+        <tags>BIM, IFC, IfcXml, IfcZip, COBie, COBieLite, BIMQL, BIM Query Langauge, .Net, C#, BuildingSmart</tags>
+        <dependencies>
+            <dependency id="Xbim.Exchange" version="3.0.0-Prerelease" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="Output\Classifications\NRM.csv" target="content\net\Classifications\NRM.csv" />
+        <file src="Output\Classifications\Uniclass 1.4.csv" target="content\net\Classifications\Uniclass 1.4.csv" />
+        <file src="Output\Classifications\Uniclass2-Ac.csv" target="content\net\Classifications\Uniclass2-Ac.csv" />
+        <file src="Output\Classifications\Uniclass2-Co.csv" target="content\net\Classifications\Uniclass2-Co.csv" />
+        <file src="Output\Classifications\Uniclass2-Ee.csv" target="content\net\Classifications\Uniclass2-Ee.csv" />
+        <file src="Output\Classifications\Uniclass2-Ef.csv" target="content\net\Classifications\Uniclass2-Ef.csv" />
+        <file src="Output\Classifications\Uniclass2-En.csv" target="content\net\Classifications\Uniclass2-En.csv" />
+        <file src="Output\Classifications\Uniclass2-PP.csv" target="content\net\Classifications\Uniclass2-PP.csv" />
+        <file src="Output\Classifications\Uniclass2-Pr.csv" target="content\net\Classifications\Uniclass2-Pr.csv" />
+        <file src="Output\Classifications\Uniclass2-Sp.csv" target="content\net\Classifications\Uniclass2-Sp.csv" />
+        <file src="Output\Classifications\Uniclass2-Ss.csv" target="content\net\Classifications\Uniclass2-Ss.csv" />
+        <file src="Output\Classifications\Uniclass2-WR.csv" target="content\net\Classifications\Uniclass2-WR.csv" />
+        <file src="Output\Classifications\Uniclass2-Zz.csv" target="content\net\Classifications\Uniclass2-Zz.csv" />
+        <file src="Output\Templates\ClassifyModelToNRM.bql" target="content\net\Templates\ClassifyModelToNRM.bql" />
+        <file src="Output\Templates\EmbeddedNRM.bql" target="content\net\Templates\EmbeddedNRM.bql" />
+        <file src="Output\Xbim.Script.dll.config" target="content\net\Xbim.Script.dll.config" />
+        <file src="Output\Xbim.Script.dll" target="lib\net45\Xbim.Script.dll" />
+    </files>
+</package>

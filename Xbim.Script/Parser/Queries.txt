@@ -1,0 +1,13 @@
+//selection statements with possibl assignment to the variable
+[$MyWalls [are/is/are not/is not] /select] [wall/floor/roof/ceiling/...][s] where [name/description/"fire protection"/type/predefined type/material] [is/is not/ is like/ is not like/contains/ doesn't contain/equals /doesn't equal/ greater than/lower than/ gt or eq/...] "Exterior wall" [and/or] material [is/contains] "Plumbum";
+
+//special selection based on name only
+[MyGroup [are/is/are not/is not] /select] [wall/floor/roof/ceiling/group/system...] "My one wall";
+
+
+//add statement for groups and systems
+Add/Remove MyWalls [to/from] MyGroup;
+
+//create objects
+Create [group/wall/slab/...] with name "New wall No.1" and description "Description of the wall No.1"
+MyNewWall is new [group/wall/slab/...] "Name of my new wall"
