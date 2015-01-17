@@ -25,22 +25,23 @@ IOS and Android versions are under development.</description>
         </dependencies>
     </metadata>
     <files>
-        <file src="Output\Classifications\NRM.csv" target="content\net\Classifications\NRM.csv" />
-        <file src="Output\Classifications\Uniclass 1.4.csv" target="content\net\Classifications\Uniclass 1.4.csv" />
-        <file src="Output\Classifications\Uniclass2-Ac.csv" target="content\net\Classifications\Uniclass2-Ac.csv" />
-        <file src="Output\Classifications\Uniclass2-Co.csv" target="content\net\Classifications\Uniclass2-Co.csv" />
-        <file src="Output\Classifications\Uniclass2-Ee.csv" target="content\net\Classifications\Uniclass2-Ee.csv" />
-        <file src="Output\Classifications\Uniclass2-Ef.csv" target="content\net\Classifications\Uniclass2-Ef.csv" />
-        <file src="Output\Classifications\Uniclass2-En.csv" target="content\net\Classifications\Uniclass2-En.csv" />
-        <file src="Output\Classifications\Uniclass2-PP.csv" target="content\net\Classifications\Uniclass2-PP.csv" />
-        <file src="Output\Classifications\Uniclass2-Pr.csv" target="content\net\Classifications\Uniclass2-Pr.csv" />
-        <file src="Output\Classifications\Uniclass2-Sp.csv" target="content\net\Classifications\Uniclass2-Sp.csv" />
-        <file src="Output\Classifications\Uniclass2-Ss.csv" target="content\net\Classifications\Uniclass2-Ss.csv" />
-        <file src="Output\Classifications\Uniclass2-WR.csv" target="content\net\Classifications\Uniclass2-WR.csv" />
-        <file src="Output\Classifications\Uniclass2-Zz.csv" target="content\net\Classifications\Uniclass2-Zz.csv" />
-        <file src="Output\Templates\ClassifyModelToNRM.bql" target="content\net\Templates\ClassifyModelToNRM.bql" />
-        <file src="Output\Templates\EmbeddedNRM.bql" target="content\net\Templates\EmbeddedNRM.bql" />
-        <file src="Output\Xbim.Script.dll.config" target="content\net\Xbim.Script.dll.config" />
-        <file src="Output\Xbim.Script.dll" target="lib\net45\Xbim.Script.dll" />
+        <file src="Output\Release\Classifications\NRM.csv" target="content\net\Classifications\NRM.csv" />
+        <file src="Output\Release\Classifications\Uniclass 1.4.csv" target="content\net\Classifications\Uniclass 1.4.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ac.csv" target="content\net\Classifications\Uniclass2-Ac.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Co.csv" target="content\net\Classifications\Uniclass2-Co.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ee.csv" target="content\net\Classifications\Uniclass2-Ee.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ef.csv" target="content\net\Classifications\Uniclass2-Ef.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-En.csv" target="content\net\Classifications\Uniclass2-En.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-PP.csv" target="content\net\Classifications\Uniclass2-PP.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Pr.csv" target="content\net\Classifications\Uniclass2-Pr.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Sp.csv" target="content\net\Classifications\Uniclass2-Sp.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ss.csv" target="content\net\Classifications\Uniclass2-Ss.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-WR.csv" target="content\net\Classifications\Uniclass2-WR.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Zz.csv" target="content\net\Classifications\Uniclass2-Zz.csv" />
+        <file src="Output\Release\Templates\ClassifyModelToNRM.bql" target="content\net\Templates\ClassifyModelToNRM.bql" />
+        <file src="Output\Release\Templates\EmbeddedNRM.bql" target="content\net\Templates\EmbeddedNRM.bql" />
+        <file src="Output\Release\Xbim.Script.dll.config" target="content\net\Xbim.Script.dll.config" />
+        <file src="Output\Release\Xbim.Script.dll" target="lib\net45\Xbim.Script.dll" />
+      <file src="Output\Release\Xbim.Script.xml" target="lib\net45\Xbim.Script.xml" />
     </files>
 </package>
