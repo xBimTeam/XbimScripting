@@ -38,6 +38,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <NuGetPackageImportStamp>ab76a87e</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -114,37 +115,37 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Xbim.COBie">
-      <HintPath>..\packages\Xbim.Exchange.3.0.0-Prerelease\lib\net45\Xbim.COBie.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.COBie, Version=3.0.5492.23545, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Exchange.3.0.4-Prerelease\lib\net45\Xbim.COBie.dll</HintPath>
     </Reference>
-    <Reference Include="Xbim.COBieLite">
-      <HintPath>..\packages\Xbim.Exchange.3.0.0-Prerelease\lib\net45\Xbim.COBieLite.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.COBieLite, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Exchange.3.0.4-Prerelease\lib\net45\Xbim.COBieLite.dll</HintPath>
     </Reference>
-    <Reference Include="Xbim.Common">
-      <HintPath>..\packages\Xbim.Essentials.3.0.1-Alpha\lib\net45\Xbim.Common.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.Common, Version=3.0.5494.21961, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Essentials.3.0.3-Prerelease\lib\net45\Xbim.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Xbim.Geometry.Engine.Interop">
-      <HintPath>..\packages\Xbim.Geometry.3.0.0-Prerelease\lib\net45\Xbim.Geometry.Engine.Interop.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.Geometry.Engine.Interop, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Geometry.3.0.3-Prerelease\lib\net45\Xbim.Geometry.Engine.Interop.dll</HintPath>
     </Reference>
-    <Reference Include="Xbim.Ifc.Extensions">
-      <HintPath>..\packages\Xbim.Essentials.3.0.1-Alpha\lib\net45\Xbim.Ifc.Extensions.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.Ifc.Extensions, Version=3.0.5494.21963, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Essentials.3.0.3-Prerelease\lib\net45\Xbim.Ifc.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="Xbim.Ifc2x3">
-      <HintPath>..\packages\Xbim.Essentials.3.0.1-Alpha\lib\net45\Xbim.Ifc2x3.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.Ifc2x3, Version=3.0.5494.21961, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Essentials.3.0.3-Prerelease\lib\net45\Xbim.Ifc2x3.dll</HintPath>
     </Reference>
-    <Reference Include="Xbim.IO">
-      <HintPath>..\packages\Xbim.Essentials.3.0.1-Alpha\lib\net45\Xbim.IO.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.IO, Version=3.0.5494.21964, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Essentials.3.0.3-Prerelease\lib\net45\Xbim.IO.dll</HintPath>
     </Reference>
-    <Reference Include="Xbim.ModelGeometry.Scene">
-      <HintPath>..\packages\Xbim.Geometry.3.0.0-Prerelease\lib\net45\Xbim.ModelGeometry.Scene.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Xbim.ModelGeometry.Scene, Version=3.0.5494.31931, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Xbim.Geometry.3.0.3-Prerelease\lib\net45\Xbim.ModelGeometry.Scene.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -167,12 +168,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Parser\README.txt" />
-    <Content Include="Xbim.Geometry.Engine32.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Xbim.Geometry.Engine64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="app.config" />
     <None Include="BQL_documentation.pdf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -214,6 +209,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Classifications\Uniclass2-Zz.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="COBieAttributes.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
@@ -281,6 +279,13 @@
     <PreBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
+  <Import Project="..\packages\Xbim.Geometry.3.0.3-Prerelease\build\net45\Xbim.Geometry.targets" Condition="Exists('..\packages\Xbim.Geometry.3.0.3-Prerelease\build\net45\Xbim.Geometry.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Xbim.Geometry.3.0.3-Prerelease\build\net45\Xbim.Geometry.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Xbim.Geometry.3.0.3-Prerelease\build\net45\Xbim.Geometry.targets'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
