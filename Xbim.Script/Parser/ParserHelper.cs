@@ -1065,17 +1065,17 @@ namespace Xbim.Script
                 var headerStyle = GetCellStyle(workbook, "", headerColour);
                 var rowNum = sheet.LastRowNum == 0 ? 0 : sheet.LastRowNum + 1;
                 IRow dataRow = sheet.CreateRow(rowNum);
-                var cellType = dataRow.CreateCell(0, CellType.STRING);
+                var cellType = dataRow.CreateCell(0, CellType.String);
                 cellType.SetCellValue("IFC Type");
                 cellType.CellStyle = headerStyle;
-                var cellLabel = dataRow.CreateCell(1, CellType.STRING);
+                var cellLabel = dataRow.CreateCell(1, CellType.String);
                 cellLabel.SetCellValue("Label");
                 cellLabel.CellStyle = headerStyle;
 
                 var names = attrNames.ToList();
                 for (int i = 0; i < attrNames.Count(); i++)
                 {
-                    var cell = dataRow.CreateCell(i + 2, CellType.STRING);
+                    var cell = dataRow.CreateCell(i + 2, CellType.String);
                     cell.SetCellValue(names[i]);
                     cell.CellStyle = headerStyle;
                 }
@@ -1087,14 +1087,14 @@ namespace Xbim.Script
                 {
                     var entity = entList[j];
                     dataRow = sheet.CreateRow(++rowNum);
-                    dataRow.CreateCell(0, CellType.STRING).SetCellValue(entity.GetType().Name);
+                    dataRow.CreateCell(0, CellType.String).SetCellValue(entity.GetType().Name);
                     var label = "#" + entity.EntityLabel;
-                    dataRow.CreateCell(1, CellType.STRING).SetCellValue(label);
+                    dataRow.CreateCell(1, CellType.String).SetCellValue(label);
 
                     for (int i = 0; i < attrNames.Count(); i++)
                     {
                         var name = names[i];
-                        var cell = dataRow.CreateCell(i+2, CellType.STRING);
+                        var cell = dataRow.CreateCell(i + 2, CellType.String);
                         //get attribute
                         var value = GetAttributeValue(name, entity);
                         if (value == null)
@@ -1121,12 +1121,7 @@ namespace Xbim.Script
             HSSFColor colour = palette.FindSimilarColor(red, green, blue);
             if (colour == null)
             {
-                // First 64 are system colours
-                if (NPOI.HSSF.Record.PaletteRecord.STANDARD_PALETTE_SIZE < 64)
-                {
-                    NPOI.HSSF.Record.PaletteRecord.STANDARD_PALETTE_SIZE = 64;
-                }
-                NPOI.HSSF.Record.PaletteRecord.STANDARD_PALETTE_SIZE++;
+               // NPOI.HSSF.Record.PaletteRecord.STANDARD_PALETTE_SIZE++;
                 colour = palette.AddColor(red, green, blue);
             }
             return colour;
@@ -1138,16 +1133,21 @@ namespace Xbim.Script
             cellStyle = workbook.CreateCellStyle() as HSSFCellStyle;
 
             HSSFDataFormat dataFormat = workbook.CreateDataFormat() as HSSFDataFormat;
-            cellStyle.DataFormat = dataFormat.GetFormat(formatString);
+            
 
-            cellStyle.FillForegroundColor = colour.GetIndex();
-            cellStyle.FillPattern = FillPatternType.SOLID_FOREGROUND;
+            if (cellStyle != null)
+            {
+                if (dataFormat != null) cellStyle.DataFormat = dataFormat.GetFormat(formatString);
+                cellStyle.FillForegroundColor = colour.Indexed;
+                cellStyle.FillPattern = FillPattern.SolidForeground;
 
-            //cellStyle.BorderBottom = BorderStyle.THIN;
-            //cellStyle.BorderLeft = BorderStyle.THIN;
-            //cellStyle.BorderRight = BorderStyle.THIN;
-            //cellStyle.BorderTop = BorderStyle.THIN;
+                //cellStyle.BorderBottom = BorderStyle.THIN;
+                //cellStyle.BorderLeft = BorderStyle.THIN;
+                //cellStyle.BorderRight = BorderStyle.THIN;
+                //cellStyle.BorderTop = BorderStyle.THIN;
 
+                
+            }
             return cellStyle;
         }
 
@@ -2362,13 +2362,13 @@ namespace Xbim.Script
                 
 
                 //write header
-                var cell = dataRow.CreateCell(++cellNum, CellType.STRING);
+                var cell = dataRow.CreateCell(++cellNum, CellType.String);
                 cell.SetCellValue("Rule");
-                cell = dataRow.CreateCell(++cellNum, CellType.STRING);
+                cell = dataRow.CreateCell(++cellNum, CellType.String);
                 cell.SetCellValue("Element type");
-                cell = dataRow.CreateCell(++cellNum, CellType.STRING);
+                cell = dataRow.CreateCell(++cellNum, CellType.String);
                 cell.SetCellValue("Label");
-                cell = dataRow.CreateCell(++cellNum, CellType.STRING);
+                cell = dataRow.CreateCell(++cellNum, CellType.String);
                 cell.SetCellValue("Is Compliant");
 
                 //write results
@@ -2381,13 +2381,13 @@ namespace Xbim.Script
                         dataRow = sheet.CreateRow(++rowNum);
                         cellNum = -1;
 
-                        cell = dataRow.CreateCell(++cellNum, CellType.STRING);
+                        cell = dataRow.CreateCell(++cellNum, CellType.String);
                         cell.SetCellValue(result.Rule);
-                        cell = dataRow.CreateCell(++cellNum, CellType.STRING);
+                        cell = dataRow.CreateCell(++cellNum, CellType.String);
                         cell.SetCellValue(typeName);
-                        cell = dataRow.CreateCell(++cellNum, CellType.STRING);
+                        cell = dataRow.CreateCell(++cellNum, CellType.String);
                         cell.SetCellValue("#" + label);
-                        cell = dataRow.CreateCell(++cellNum, CellType.BOOLEAN);
+                        cell = dataRow.CreateCell(++cellNum, CellType.Boolean);
                         cell.SetCellValue(ruleRes.IsCompliant);
                     }
 
