@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
     <metadata>
         <id>Xbim.Scripting</id>
-        <version>3.0.5-Prerelease</version>
+        <version>3.0.6-Prerelease</version>
         <title>xBIM Scripting</title>
         <authors>xBIM team</authors>
         <owners>Steve Lockley</owners>
