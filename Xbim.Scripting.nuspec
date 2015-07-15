@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
     <metadata>
         <id>Xbim.Scripting</id>
-        <version>3.0.14</version>
+        <version>3.1.0</version>
         <title>xBIM Scripting</title>
         <authors>xBIM team</authors>
         <owners>Steve Lockley</owners>
@@ -17,11 +17,14 @@ xBIM reads and writes Ifc, IfcXMl and IfcZip formats.
 The xBIM project provides packages to convert IFC models to COBie spreadsheets in both UK and US cultures as well as a range of 3D viewing controls for use with Windows forms, WPF, WEBGL and OpenGL platforms.
 IOS and Android versions are under development.</description>
         <summary>The .Net toolkit for developing BIM applications based on the IFC standard. Essential support for the Ifc data model</summary>
-        <releaseNotes>3.0 contains the first Nuget release of the BIM Query Language</releaseNotes>
+        <releaseNotes>
+          3.1 ships net40 signed dlls.
+          3.0 contains the first Nuget release of the BIM Query Language.
+        </releaseNotes>
         <language>en-GB</language>
         <tags>BIM, IFC, IfcXml, IfcZip, COBie, COBieLite, BIMQL, BIM Query Langauge, .Net, C#, BuildingSmart</tags>
         <dependencies>
-            <dependency id="Xbim.Exchange" version="3.0.83" />
+            <dependency id="Xbim.Exchange" version="3.1.0" />
         </dependencies>
     </metadata>
     <files>
