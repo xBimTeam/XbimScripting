@@ -25,7 +25,7 @@ IOS and Android versions are under development.</description>
         <tags>BIM, IFC, IfcXml, IfcZip, COBie, COBieLite, BIMQL, BIM Query Langauge, .Net, C#, BuildingSmart</tags>
         <dependencies>
             <dependency id="Xbim.Exchange" version="3.1.4" />
-        </dependencies>tomo
+        </dependencies>
     </metadata>
     <files>
         <file src="Output\Release\Classifications\NRM.csv" target="content\net40\Classifications\NRM.csv" />
