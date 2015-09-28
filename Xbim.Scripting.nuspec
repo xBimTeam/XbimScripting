@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
     <metadata>
         <id>Xbim.Scripting</id>
-        <version>3.1.10-V0008</version>
+        <version>3.1.10-V0009</version>
         <title>xBIM Scripting</title>
         <authors>xBIM team</authors>
         <owners>Steve Lockley</owners>
@@ -24,9 +24,9 @@ IOS and Android versions are under development.</description>
         <language>en-GB</language>
         <tags>BIM, IFC, IfcXml, IfcZip, COBie, COBieLite, BIMQL, BIM Query Langauge, .Net, C#, BuildingSmart</tags>
         <dependencies>
-            <dependency id="Xbim.Essentials" version="3.1.10-V0007" />
-            <dependency id="Xbim.Geometry" version="3.1.11-V0005" />
-            <dependency id="Xbim.Exchange" version="3.1.10-V0011" />
+            <dependency id="Xbim.Essentials" version="3.1.10-V0008" />
+            <dependency id="Xbim.Geometry" version="3.1.11-V0006" />
+            <dependency id="Xbim.Exchange" version="3.1.10-V0012" />
             <dependency id="Xbim.PropertySets" version="3.1.10-V0003" />
         </dependencies>
     </metadata>
