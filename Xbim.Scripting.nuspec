@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
     <metadata>
         <id>Xbim.Scripting</id>
-        <version>3.1.8</version>
+        <version>3.1.10</version>
         <title>xBIM Scripting</title>
         <authors>xBIM team</authors>
         <owners>Steve Lockley</owners>
@@ -17,32 +17,38 @@ xBIM reads and writes Ifc, IfcXMl and IfcZip formats.
 The xBIM project provides packages to convert IFC models to COBie spreadsheets in both UK and US cultures as well as a range of 3D viewing controls for use with Windows forms, WPF, WEBGL and OpenGL platforms.
 IOS and Android versions are under development.</description>
         <summary>The .Net toolkit for developing BIM applications based on the IFC standard. Essential support for the Ifc data model</summary>
-        <releaseNotes>3.0 contains the first Nuget release of the BIM Query Language</releaseNotes>
+        <releaseNotes>
+          3.1 ships net40 signed dlls.
+          3.0 contains the first Nuget release of the BIM Query Language.
+        </releaseNotes>
         <language>en-GB</language>
         <tags>BIM, IFC, IfcXml, IfcZip, COBie, COBieLite, BIMQL, BIM Query Langauge, .Net, C#, BuildingSmart</tags>
         <dependencies>
-            <dependency id="Xbim.Exchange" version="3.1.8" />
+            <dependency id="Xbim.Essentials" version="3.1.10" />
+            <dependency id="Xbim.Geometry" version="3.1.11" />
+            <dependency id="Xbim.Exchange" version="3.1.10" />
+            <dependency id="Xbim.PropertySets" version="3.1.10" />
         </dependencies>
     </metadata>
     <files>
-        <file src="Output\Release\Classifications\NRM.csv" target="content\net45\Classifications\NRM.csv" />
-        <file src="Output\Release\Classifications\Uniclass 1.4.csv" target="content\net45\Classifications\Uniclass 1.4.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Ac.csv" target="content\net45\Classifications\Uniclass2-Ac.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Co.csv" target="content\net45\Classifications\Uniclass2-Co.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Ee.csv" target="content\net45\Classifications\Uniclass2-Ee.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Ef.csv" target="content\net45\Classifications\Uniclass2-Ef.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-En.csv" target="content\net45\Classifications\Uniclass2-En.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-PP.csv" target="content\net45\Classifications\Uniclass2-PP.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Pr.csv" target="content\net45\Classifications\Uniclass2-Pr.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Sp.csv" target="content\net45\Classifications\Uniclass2-Sp.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Ss.csv" target="content\net45\Classifications\Uniclass2-Ss.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-WR.csv" target="content\net45\Classifications\Uniclass2-WR.csv" />
-        <file src="Output\Release\Classifications\Uniclass2-Zz.csv" target="content\net45\Classifications\Uniclass2-Zz.csv" />
-        <file src="Output\Release\Templates\ClassifyModelToNRM.bql" target="content\net45\Templates\ClassifyModelToNRM.bql" />
-        <file src="Output\Release\Templates\EmbeddedNRM.bql" target="content\net45\Templates\EmbeddedNRM.bql" />
-        <file src="Output\Release\Xbim.Script.dll.config" target="content\net45\Xbim.Script.dll.config" />
-        <file src="Output\Release\Xbim.Script.dll" target="lib\net45\Xbim.Script.dll" />
-      <file src="Output\Release\Xbim.Script.xml" target="lib\net45\Xbim.Script.xml" />
-        <file src="Output\Release\Xbim.Script.pdb" target="lib\net45\Xbim.Script.pdb" />
+        <file src="Output\Release\Classifications\NRM.csv" target="content\net40\Classifications\NRM.csv" />
+        <file src="Output\Release\Classifications\Uniclass 1.4.csv" target="content\net40\Classifications\Uniclass 1.4.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ac.csv" target="content\net40\Classifications\Uniclass2-Ac.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Co.csv" target="content\net40\Classifications\Uniclass2-Co.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ee.csv" target="content\net40\Classifications\Uniclass2-Ee.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ef.csv" target="content\net40\Classifications\Uniclass2-Ef.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-En.csv" target="content\net40\Classifications\Uniclass2-En.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-PP.csv" target="content\net40\Classifications\Uniclass2-PP.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Pr.csv" target="content\net40\Classifications\Uniclass2-Pr.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Sp.csv" target="content\net40\Classifications\Uniclass2-Sp.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Ss.csv" target="content\net40\Classifications\Uniclass2-Ss.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-WR.csv" target="content\net40\Classifications\Uniclass2-WR.csv" />
+        <file src="Output\Release\Classifications\Uniclass2-Zz.csv" target="content\net40\Classifications\Uniclass2-Zz.csv" />
+        <file src="Output\Release\Templates\ClassifyModelToNRM.bql" target="content\net40\Templates\ClassifyModelToNRM.bql" />
+        <file src="Output\Release\Templates\EmbeddedNRM.bql" target="content\net40\Templates\EmbeddedNRM.bql" />
+        <file src="Output\Release\Xbim.Script.dll.config" target="content\net40\Xbim.Script.dll.config" />
+        <file src="Output\Release\Xbim.Script.dll" target="lib\net40\Xbim.Script.dll" />
+        <file src="Output\Release\Xbim.Script.xml" target="lib\net40\Xbim.Script.xml" />
+        <file src="Output\Release\Xbim.Script.pdb" target="lib\net40\Xbim.Script.pdb" />
     </files>
 </package>
