@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xbim.Script", "Xbim.Script\Xbim.Script.csproj", "{BAE9A827-0620-4F68-A384-336A491EDD91}"
 EndProject
@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		Xbim.Scripting.nuspec = Xbim.Scripting.nuspec
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XplorerPlugins.Scripting", "XplorerPlugins.Scripting\XplorerPlugins.Scripting.csproj", "{B1BCF899-6B2E-4A99-8998-AA946FC64F3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +22,10 @@ Global
 		{BAE9A827-0620-4F68-A384-336A491EDD91}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAE9A827-0620-4F68-A384-336A491EDD91}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BAE9A827-0620-4F68-A384-336A491EDD91}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1BCF899-6B2E-4A99-8998-AA946FC64F3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1BCF899-6B2E-4A99-8998-AA946FC64F3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1BCF899-6B2E-4A99-8998-AA946FC64F3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1BCF899-6B2E-4A99-8998-AA946FC64F3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
