@@ -3,10 +3,10 @@
 // (see accompanying GPPGcopyright.rtf)
 
 // GPPG version 1.5.0
-// Machine:  TYPHOON
-// DateTime: 25/06/2014 14:52:38
-// UserName: Steve
-// Input file <Parser.y - 25/06/2014 14:50:02>
+// Machine:  MACBOOK
+// DateTime: 31/03/2016 18:13:47
+// UserName: Bonghi
+// Input file <Parser.y - 28/02/2015 05:13:22>
 
 // options: conflicts lines gplex conflicts listing
 
@@ -75,10 +75,10 @@ internal class ScanObj {
 
 internal partial class Parser: ShiftReduceParser<ValueType, LexLocation>
 {
-  // Verbatim content from Parser.y - 25/06/2014 14:50:02
+  // Verbatim content from Parser.y - 28/02/2015 05:13:22
 #line 2 "Parser.y"
 	
-  // End verbatim content from Parser.y - 25/06/2014 14:50:02
+  // End verbatim content from Parser.y - 28/02/2015 05:13:22
 
 #pragma warning disable 649
   private static Dictionary<int, string> aliasses;

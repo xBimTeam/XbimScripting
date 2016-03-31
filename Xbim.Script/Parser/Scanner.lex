@@ -172,11 +172,12 @@
 "defined"			{return (int)Tokens.DEFINED;}
 
 /* ********************     values        ****************** */
+/* character groups in the \nnn format are in OCTAL! */
 [\-\+]?[0-9]+	    {  return (int)SetValue(Tokens.INTEGER); }
 [\-\+]?[0-9]*[\.][0-9]*	|
 [\-\+\.0-9][\.0-9]+E[\-\+0-9][0-9]* { return (int)SetValue(Tokens.DOUBLE); }
-[\"]([\n]|[\000\011-\046\050-\176\201-\237\240-\377]|[\047][\047])*[\"]	{ return (int)SetValue(); }
-[\']([\n]|[\000\011-\046\050-\176\201-\237\240-\377]|[\047][\047])*[\']	{ return (int)SetValue(); }
+[\"]([\n]|[\000\011-\041\043-\176\200-\377]|[\042][\042])*[\"]	{ return (int)SetValue(); }
+[\']([\n]|[\000\011-\046\050-\176\200-\377]|[\047][\047])*[\']	{ return (int)SetValue(); }
 ".T." |
 ".F." |
 true |
