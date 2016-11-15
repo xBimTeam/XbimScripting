@@ -6,7 +6,7 @@
 %parsertype Parser
 %output=Parser.cs
 %visibility internal
-%using Xbim.XbimExtensions.Interfaces
+%using Xbim.Common
 %using System.Linq.Expressions
 
 
@@ -18,7 +18,7 @@
 		public double doubleVal;
 		public bool boolVal;
 		public Type typeVal;
-		public IEnumerable<IPersistIfcEntity> entities;
+		public IEnumerable<IPersistEntity> entities;
 		public object val;
 	  }
 
@@ -196,7 +196,7 @@ string_list
 	;
 
 selection
-	: SELECT selection_statement									{Variables.Set("$$", ((IEnumerable<IPersistIfcEntity>)($2.val)));}
+	: SELECT selection_statement									{Variables.Set("$$", ((IEnumerable<IPersistEntity>)($2.val)));}
 	| IDENTIFIER op_bool selection_statement						{AddOrRemoveFromSelection($1.strVal, ((Tokens)($2.val)), $3.val);}
 	;
 
@@ -209,13 +209,13 @@ selection_statement
 
 element_set
 	: IDENTIFIER													{$$.entities = GetVariableContent($1.strVal); $$.strVal = $1.strVal;}
-	| selection_statement											{$$.entities = (IEnumerable<IPersistIfcEntity>)($1.val); }
+	| selection_statement											{$$.entities = (IEnumerable<IPersistEntity>)($1.val); }
 	;
 	
 creation
-	: CREATE creation_statement										{Variables.Set("$$", ((IPersistIfcEntity)($2.val)));}
+	: CREATE creation_statement										{Variables.Set("$$", ((IPersistEntity)($2.val)));}
 	| CREATE CLASSIFICATION STRING									{CreateClassification($3.strVal);}
-	| IDENTIFIER OP_EQ creation_statement							{Variables.Set($1.strVal, ((IPersistIfcEntity)($3.val)));}
+	| IDENTIFIER OP_EQ creation_statement							{Variables.Set($1.strVal, ((IPersistEntity)($3.val)));}
 	;
 
 creation_statement

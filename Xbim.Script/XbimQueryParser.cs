@@ -40,7 +40,7 @@ namespace Xbim.Script
         /// <summary>
         /// Model on which the parser operates
         /// </summary>
-        public XbimModel Model { get { return _parser.Model; } }
+        public IModel Model { get { return _parser.Model; } }
 
         /// <summary>
         /// Variables which are result of the parsing process. 
@@ -53,7 +53,7 @@ namespace Xbim.Script
         /// You can also close and open any model from the script.
         /// </summary>
         /// <param name="model">Model which shuldbe used for the script execution</param>
-        public XbimQueryParser(XbimModel model)
+        public XbimQueryParser(IModel model)
         {
             Init(model);
         }
@@ -68,10 +68,10 @@ namespace Xbim.Script
             Init(null);
         }
 
-        private void Init(XbimModel model)
+        private void Init(IModel model)
         {
             if (model == null)
-                model = XbimModel.CreateTemporaryModel();
+                model = IModel.CreateTemporaryModel();
             _scanner = new Scanner();
             _parser = new Parser(_scanner, model);
             _parser.OnModelChanged += delegate(object sender, ModelChangedEventArgs e)
@@ -237,7 +237,7 @@ namespace Xbim.Script
         /// Event fired when model changes (closed or open)
         /// </summary>
         public event ModelChangedHandler OnModelChanged;
-        private void ModelChanged(XbimModel newModel)
+        private void ModelChanged(IModel newModel)
         {
             if (OnModelChanged != null)
                 OnModelChanged(this, new ModelChangedEventArgs(newModel));

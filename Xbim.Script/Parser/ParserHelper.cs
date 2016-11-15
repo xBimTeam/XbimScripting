@@ -3,21 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using QUT.Xbim.Gppg;
-using Xbim.IO;
-using Xbim.XbimExtensions.Interfaces;
-using Xbim.Ifc2x3.Kernel;
 using System.Linq.Expressions;
 using System.Reflection;
-using Xbim.XbimExtensions.SelectTypes;
-using Xbim.Ifc2x3.MaterialResource;
-using Xbim.Ifc2x3.Extensions;
-using Xbim.Ifc2x3.MeasureResource;
-using Xbim.Ifc2x3.ProductExtension;
 using System.IO;
-using Xbim.Ifc2x3.PropertyResource;
-using Xbim.Ifc2x3.MaterialPropertyResource;
-using Xbim.Ifc2x3.QuantityResource;
-using Xbim.Ifc2x3.ExternalReferenceResource;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.HSSF.Util;
@@ -25,103 +13,82 @@ using System.Globalization;
 using Xbim.COBie;
 using Xbim.COBie.Serialisers;
 using Newtonsoft.Json;
+using Xbim.Common;
+using Xbim.Common.Metadata;
+using Xbim.Ifc4.Interfaces;
+using Xbim.Ifc4.MeasureResource;
+using Xbim.Ifc4.Kernel;
 
 namespace Xbim.Script
 {
     internal partial class Parser
     {
-        private XbimModel _model;
+        private IModel _model;
         private XbimVariables _variables;
-        private ParameterExpression _input = Expression.Parameter(typeof(IPersistIfcEntity), "Input");
+        private ParameterExpression _input = Expression.Parameter(typeof(IPersistEntity), "Input");
+        private Create _create;
+
 
         //public properties of the parser
         public XbimVariables Variables { get { return _variables; } }
-        public XbimModel Model { get { return _model; } }
+        public IModel Model { get { return _model; } }
         public TextWriter Output { get; set; }
 
-        internal Parser(Scanner lex, XbimModel model): base(lex)
+
+        internal Parser(Scanner lex, IModel model) : base(lex)
         {
             _model = model;
             _variables = new XbimVariables();
+            _create = new Create(model);
             if (_model == null) throw new ArgumentNullException("Model is NULL");
         }
 
         #region Objects creation
-        private IPersistIfcEntity CreateObject(Type type, string name, string description = null)
+        private IPersistEntity CreateObject(Type type, string name, string description = null)
         {
             if (_model == null) throw new ArgumentNullException("Model is NULL");
             if (name == null)
             {
                 Scanner.yyerror("Name must be defined for creation of the " + type.Name + ".");
-            } 
-
-            Func<IPersistIfcEntity> create = () => {
-                var result = _model.Instances.New(type);
-
-                //set name and description
-                if (result == null) return null;
-                IfcRoot root = result as IfcRoot;
-                if (root != null)
-                {
-                    root.Name = name;
-                    root.Description = description;
-                }
-                IfcMaterial material = result as IfcMaterial;
-                if (material != null)
-                {
-                    material.Name = name;
-                }
-
-                return result;
-            };
-
-            IPersistIfcEntity entity = null;
-            if (_model.IsTransacting)
-            {
-                entity = create();
             }
-            else
+
+            var result = _model.Instances.New(type);
+
+            //set name and description
+            if (result == null) return null;
+            var root = result as IIfcRoot;
+            if (root != null)
             {
-                using (var txn = _model.BeginTransaction("Object creation"))
-                {
-                    entity = create();
-                    txn.Commit();
-                }
+                root.Name = name;
+                root.Description = description;
             }
-            return entity;
+            var material = result as IIfcMaterial;
+            if (material != null)
+            {
+                material.Name = name;
+            }
+
+            return result;
         }
 
-        private IfcMaterialLayerSet CreateLayerSet(string name, List<Layer> layers)
+        private IIfcMaterialLayerSet CreateLayerSet(string name, List<Layer> layers)
         {
-            Func<IfcMaterialLayerSet> create = () => {
-                return _model.Instances.New<IfcMaterialLayerSet>(ms =>
+            return _create.MaterialLayerSet(ms =>
+            {
+                ms.LayerSetName = name;
+                foreach (var layer in layers)
                 {
-                    ms.LayerSetName = name;
-                    foreach (var layer in layers)
+                    ms.MaterialLayers.Add(_create.MaterialLayer(ml =>
                     {
-                        ms.MaterialLayers.Add(_model.Instances.New<IfcMaterialLayer>(ml =>
-                        {
-                            ml.LayerThickness = layer.thickness;
+                        ml.LayerThickness = layer.thickness;
                             //get material if it already exists
-                            var material = _model.Instances.Where<IfcMaterial>(m => m.Name.ToString().ToLower() == layer.material).FirstOrDefault();
-                            if (material == null)
-                                material = _model.Instances.New<IfcMaterial>(m => m.Name = layer.material);
-                            ml.Material = material;
-                        }));
-                    }
-                });
-            };
-
-            IfcMaterialLayerSet result = null;
-            if (_model.IsTransacting)
-                result = create();
-            else
-                using (var txn = _model.BeginTransaction())
-                {
-                    result = create();
-                    txn.Commit();
+                            var material = _model.Instances.Where<IIfcMaterial>(m => m.Name.ToString().ToLower() == layer.material).FirstOrDefault();
+                        if (material == null)
+                            material = _create.Material(m => m.Name = layer.material);
+                        ml.Material = material;
+                    }));
                 }
-            return result;
+            });
         }
         #endregion
 
@@ -154,28 +121,28 @@ namespace Xbim.Script
             return Expression.Call(thisExpr, evaluateMethod, _input, propNameExpr, valExpr, condExpr);
         }
 
-        private bool EvaluateValueCondition(IPersistIfcEntity input, string propertyName, object value, Tokens condition)
+        private bool EvaluateValueCondition(IPersistEntity input, string propertyName, object value, Tokens condition)
         {
             //try to get attribute
             var attr = GetAttributeValue(propertyName, input);
-            var prop = attr as IfcValue;
-            if (propertyName.ToLower() == "entitylabel")
+            var prop = attr as IIfcValue;
+            if (propertyName.ToLower() == "entitylabel") 
                 prop = new IfcInteger(Math.Abs((int)attr));
 
             //try to get property if attribute doesn't exist
             if (prop == null)
-             prop = GetPropertyValue(propertyName, input);
+                prop = GetPropertyValue(propertyName, input);
 
             return EvaluateValue(prop, value, condition);
         }
 
-        private bool EvaluatePropertyCondition(IPersistIfcEntity input, string propertyName, object value, Tokens condition)
+        private bool EvaluatePropertyCondition(IPersistEntity input, string propertyName, object value, Tokens condition)
         {
             var prop = GetPropertyValue(propertyName, input);
             return EvaluateValue(prop, value, condition);
         }
 
-        private bool EvaluateAttributeCondition(IPersistIfcEntity input, string attribute, object value, Tokens condition)
+        private bool EvaluateAttributeCondition(IPersistEntity input, string attribute, object value, Tokens condition)
         {
             var attr = GetAttributeValue(attribute, input);
             return EvaluateValue(attr, value, condition);
@@ -230,14 +197,14 @@ namespace Xbim.Script
                 Scanner.yyerror(val.ToString() + " is not compatible type with type of " + ifcVal.GetType());
                 return false;
             }
-            
+
 
             //create expression
             bool? result = null;
             switch (condition)
             {
                 case Tokens.OP_EQ:
-                    if (left is string  && right is string)
+                    if (left is string && right is string)
                         return ((string)left).ToLower() == ((string)right).ToLower();
                     return left.Equals(right);
                 case Tokens.OP_NEQ:
@@ -272,13 +239,13 @@ namespace Xbim.Script
         }
 
         private static object UnWrapType(object value)
-        { 
+        {
             //enumeration
             if (value.GetType().IsEnum)
                 return Enum.GetName(value.GetType(), value);
 
             //express type
-            ExpressType express = value as ExpressType;
+            var express = value as IExpressValueType;
             if (express != null)
                 return express.Value;
 
@@ -295,18 +262,18 @@ namespace Xbim.Script
             return IsNullableType(type) ? type.GetGenericArguments()[0] : type;
         }
 
-        private static bool IsOfType(Type type, IPersistIfcEntity entity)
+        private static bool IsOfType(Type type, IPersistEntity entity)
         {
             return type.IsAssignableFrom(entity.GetType());
         }
 
-        private static PropertyInfo GetAttributeInfo(string name, IPersistIfcEntity entity)
+        private static PropertyInfo GetAttributeInfo(string name, IPersistEntity entity)
         {
             Type type = entity.GetType();
             return type.GetProperty(name, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public);
         }
 
-        private static object GetAttributeValue(string name, IPersistIfcEntity entity)
+        private static object GetAttributeValue(string name, IPersistEntity entity)
         {
             PropertyInfo pInfo = GetAttributeInfo(name, entity);
             if (pInfo == null)
@@ -314,7 +281,7 @@ namespace Xbim.Script
             return pInfo.GetValue(entity, null);
         }
 
-        private static PropertyInfo GetPropertyInfo(string name, IPersistIfcEntity entity, out object propertyObject)
+        private static PropertyInfo GetPropertyInfo(string name, IPersistEntity entity, out object propertyObject)
         {
             //try to get the name of the pSet if it is encoded in there
             var split = name.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -335,7 +302,7 @@ namespace Xbim.Script
             IfcElementQuantity eq = null;
             IfcExtendedMaterialProperties eps = null;
 
-            IfcObject obj = entity as IfcObject;
+            var obj = entity as IIfcObject;
             if (obj != null)
             {
                 if (specificPSet)
@@ -343,10 +310,10 @@ namespace Xbim.Script
                     ps = obj.GetPropertySet(pSetName);
                     eq = obj.GetElementQuantity(pSetName);
                 }
-                pSets =  ps == null ? obj.GetAllPropertySets() : new List<IfcPropertySet>(){ps};
+                pSets = ps == null ? obj.GetAllPropertySets() : new List<IfcPropertySet>() { ps };
                 elQuants = eq == null ? obj.GetAllElementQuantities() : new List<IfcElementQuantity>() { eq };
             }
-            IfcTypeObject typeObj = entity as IfcTypeObject;
+            var typeObj = entity as IIfcTypeObject;
             if (typeObj != null)
             {
                 if (specificPSet)
@@ -355,9 +322,9 @@ namespace Xbim.Script
                     eq = typeObj.GetElementQuantity(pSetName);
                 }
                 pSets = ps == null ? typeObj.GetAllPropertySets() : new List<IfcPropertySet>() { ps };
-                elQuants = eq == null ? typeObj.GetAllElementQuantities() : new List<IfcElementQuantity>() { eq};
+                elQuants = eq == null ? typeObj.GetAllElementQuantities() : new List<IfcElementQuantity>() { eq };
             }
-            IfcMaterial material = entity as IfcMaterial;
+            var material = entity as IIfcMaterial;
             if (material != null)
             {
                 if (specificPSet)
@@ -438,7 +405,7 @@ namespace Xbim.Script
         }
 
 
-        private static IfcValue GetPropertyValue(string name, IPersistIfcEntity entity)
+        private static IIfcValue GetPropertyValue(string name, IPersistEntity entity)
         {
             object pObject = null;
             var pInfo = GetPropertyInfo(name, entity, out pObject);
@@ -446,7 +413,7 @@ namespace Xbim.Script
             if (pInfo == null) return null;
 
             var result = pInfo.GetValue(pObject, null);
-            return result as IfcValue;
+            return result as IIfcValue;
         }
 
 
@@ -473,7 +440,7 @@ namespace Xbim.Script
             throw new Exception("Unexpected type");
         }
 
-        private static bool? GreaterThan(object left, object right) 
+        private static bool? GreaterThan(object left, object right)
         {
             try
             {
@@ -483,9 +450,9 @@ namespace Xbim.Script
             }
             catch (Exception)
             {
-                return null;   
+                return null;
             }
-           
+
         }
 
         private static bool? LessThan(object left, object right)
@@ -513,35 +480,35 @@ namespace Xbim.Script
         #endregion
 
         #region Select statements
-        private IEnumerable<IPersistIfcEntity> Select(Type type, string name)
+        private IEnumerable<IPersistEntity> Select(Type type, string name)
         {
-            if (!typeof(IfcRoot).IsAssignableFrom(type)) return new IPersistIfcEntity[]{};
+            if (!typeof(IfcRoot).IsAssignableFrom(type)) return new IPersistEntity[] { };
             Expression expression = GenerateValueCondition("Name", name, Tokens.OP_EQ, Tokens.ATTRIBUTE);
             return Select(type, expression);
         }
 
-        private IEnumerable<IPersistIfcEntity> Select(Type type, Expression condition = null)
+        private IEnumerable<IPersistEntity> Select(Type type, Expression condition = null)
         {
             MethodInfo method = _model.Instances.GetType().GetMethod("OfType", new Type[] { typeof(bool) });
             MethodInfo generic = method.MakeGenericMethod(type);
             if (condition != null)
             {
-                var typeFiltered = generic.Invoke(_model.Instances, new object[] { true }) as IEnumerable<IPersistIfcEntity>;
-                return typeFiltered.Where(Expression.Lambda<Func<IPersistIfcEntity, bool>>(condition, _input).Compile());
+                var typeFiltered = generic.Invoke(_model.Instances, new object[] { true }) as IEnumerable<IPersistEntity>;
+                return typeFiltered.Where(Expression.Lambda<Func<IPersistEntity, bool>>(condition, _input).Compile());
             }
             else
             {
-                var typeFiltered = generic.Invoke(_model.Instances, new object[] { false }) as IEnumerable<IPersistIfcEntity>;
+                var typeFiltered = generic.Invoke(_model.Instances, new object[] { false }) as IEnumerable<IPersistEntity>;
                 return typeFiltered;
             }
 
         }
 
-        private IEnumerable<IPersistIfcEntity> SelectClassification(string code)
+        private IEnumerable<IPersistEntity> SelectClassification(string code)
         {
             return _model.Instances.Where<IfcClassificationReference>(c => c.ItemReference.ToString().ToLower() == code.ToLower());
         }
-        
+
         #endregion
 
         #region TypeObject conditions 
@@ -565,13 +532,13 @@ namespace Xbim.Script
             return Expression.Call(thisExpr, evaluateMethod, _input, typeExpr, condExpr);
         }
 
-        private bool EvaluateTypeObjectName(IPersistIfcEntity input, string typeName, Tokens condition)
+        private bool EvaluateTypeObjectName(IPersistEntity input, string typeName, Tokens condition)
         {
             IfcObject obj = input as IfcObject;
             if (obj == null) return false;
 
             var type = obj.GetDefiningType();
-           
+
             //null variant
             if (type == null)
             {
@@ -594,13 +561,13 @@ namespace Xbim.Script
             }
         }
 
-        private bool EvaluateTypeObjectType(IPersistIfcEntity input, Type type, Tokens condition)
+        private bool EvaluateTypeObjectType(IPersistEntity input, Type type, Tokens condition)
         {
             IfcObject obj = input as IfcObject;
             if (obj == null) return false;
 
             var typeObj = obj.GetDefiningType();
-            
+
             //null variant
             if (typeObj == null || type == null)
             {
@@ -627,9 +594,9 @@ namespace Xbim.Script
             }
         }
 
-        private Expression GenerateTypeCondition(Expression expression) 
+        private Expression GenerateTypeCondition(Expression expression)
         {
-            var function = Expression.Lambda<Func<IPersistIfcEntity, bool>>(expression, _input).Compile();
+            var function = Expression.Lambda<Func<IPersistEntity, bool>>(expression, _input).Compile();
             var fceExpr = Expression.Constant(function);
             var thisExpr = Expression.Constant(this);
 
@@ -638,7 +605,7 @@ namespace Xbim.Script
             return Expression.Call(thisExpr, evaluateMethod, _input, fceExpr);
         }
 
-        private bool EvaluateTypeCondition(IPersistIfcEntity input, Func<IPersistIfcEntity, bool> function)
+        private bool EvaluateTypeCondition(IPersistEntity input, Func<IPersistEntity, bool> function)
         {
             var obj = input as IfcObject;
             if (obj == null) return false;
@@ -664,7 +631,7 @@ namespace Xbim.Script
             return Expression.Call(thisExpr, evaluateMethod, _input, codeExpr, condExpr);
         }
 
-        private bool EvaluateClassificationCondition(IPersistIfcEntity input, string code, Tokens condition)
+        private bool EvaluateClassificationCondition(IPersistEntity input, string code, Tokens condition)
         {
             var root = input as IfcRoot;
             if (root == null)
@@ -680,14 +647,14 @@ namespace Xbim.Script
             {
                 string classCode = null;
                 var reference = rel.RelatingClassification as IfcClassificationReference;
-                if (reference != null) 
+                if (reference != null)
                     classCode = reference.ItemReference;
-                
+
                 var notation = rel.RelatingClassification as IfcClassificationNotation;
                 if (notation != null)
                     classCode = ConcatClassFacets(notation.NotationFacets);
 
-                if (!String.IsNullOrEmpty( classCode))
+                if (!String.IsNullOrEmpty(classCode))
                 {
                     codes.Add(classCode.ToLower());
                 }
@@ -698,7 +665,7 @@ namespace Xbim.Script
                 switch (condition)
                 {
                     case Tokens.OP_EQ:
-                        return codes.Count == 0; 
+                        return codes.Count == 0;
                     case Tokens.OP_NEQ:
                         return codes.Count != 0;
                     default:
@@ -732,7 +699,7 @@ namespace Xbim.Script
             result = result.Trim('-');
             return result;
         }
-        
+
         #endregion
 
         #region Material conditions
@@ -745,7 +712,7 @@ namespace Xbim.Script
             return Expression.Call(null, evaluateMethod, _input, nameExpr, condExpr);
         }
 
-        private static bool EvaluateMaterialCondition(IPersistIfcEntity input, string materialName, Tokens condition) 
+        private static bool EvaluateMaterialCondition(IPersistEntity input, string materialName, Tokens condition)
         {
             IfcRoot root = input as IfcRoot;
             if (root == null) return false;
@@ -755,7 +722,7 @@ namespace Xbim.Script
             List<string> names = new List<string>();
             foreach (var mRel in materialRelations)
             {
-                names.AddRange(GetMaterialNames(mRel.RelatingMaterial));    
+                names.AddRange(GetMaterialNames(mRel.RelatingMaterial));
             }
 
             //convert to lower case
@@ -795,9 +762,9 @@ namespace Xbim.Script
         private static List<string> GetMaterialNames(IfcMaterialSelect materialSelect)
         {
             List<string> names = new List<string>();
-            
+
             IfcMaterial material = materialSelect as IfcMaterial;
-            if (material != null) names.Add( material.Name);
+            if (material != null) names.Add(material.Name);
 
             IfcMaterialList materialList = materialSelect as IfcMaterialList;
             if (materialList != null)
@@ -805,18 +772,18 @@ namespace Xbim.Script
                 {
                     names.Add(m.Name);
                 }
-            
+
             IfcMaterialLayerSetUsage materialUsage = materialSelect as IfcMaterialLayerSetUsage;
             if (materialUsage != null)
                 names.AddRange(GetMaterialNames(materialUsage.ForLayerSet));
-            
+
             IfcMaterialLayerSet materialLayerSet = materialSelect as IfcMaterialLayerSet;
             if (materialLayerSet != null)
                 foreach (var m in materialLayerSet.MaterialLayers)
                 {
                     names.AddRange(GetMaterialNames(m));
                 }
-            
+
             IfcMaterialLayer materialLayer = materialSelect as IfcMaterialLayer;
             if (materialLayer != null)
                 if (materialLayer.Material != null)
@@ -839,7 +806,7 @@ namespace Xbim.Script
             return Expression.Call(thisExpr, evaluateMethod, _input, valExpr, typeExpr, condExpr);
         }
 
-        private bool EvaluateModelCondition(IPersistIfcEntity input, string value, Tokens type, Tokens condition)
+        private bool EvaluateModelCondition(IPersistEntity input, string value, Tokens type, Tokens condition)
         {
             IModel model = input.ModelOf;
             IModel testModel = null;
@@ -864,7 +831,7 @@ namespace Xbim.Script
                     default:
                         throw new ArgumentException("Unexpected condition. Only MODEL, OWNER or ORGANIZATION expected.");
                 }
-                if (testModel != null) 
+                if (testModel != null)
                     break;
             }
 
@@ -895,8 +862,8 @@ namespace Xbim.Script
         #region Variables manipulation
         private void AddOrRemoveFromSelection(string variableName, Tokens operation, object entities)
         {
-            IEnumerable<IPersistIfcEntity> ent = entities as IEnumerable<IPersistIfcEntity>;
-            if (ent == null) throw new ArgumentException("Entities should be IEnumerable<IPersistIfcEntity>");
+            IEnumerable<IPersistEntity> ent = entities as IEnumerable<IPersistEntity>;
+            if (ent == null) throw new ArgumentException("Entities should be IEnumerable<IPersistEntity>");
             switch (operation)
             {
                 case Tokens.OP_EQ:
@@ -910,7 +877,7 @@ namespace Xbim.Script
             }
         }
 
-        private IEnumerable<IPersistIfcEntity> GetVariableContent(string identifier)
+        private IEnumerable<IPersistEntity> GetVariableContent(string identifier)
         {
             if (string.IsNullOrEmpty(identifier))
                 throw new ArgumentNullException();
@@ -920,7 +887,7 @@ namespace Xbim.Script
             else
             {
                 Scanner.yyerror("Identifier {0} is not defined", identifier);
-                return new IPersistIfcEntity[] { };
+                return new IPersistEntity[] { };
             }
         }
 
@@ -956,7 +923,7 @@ namespace Xbim.Script
             if (output != null) output.Close();
         }
 
-        private void DumpAttributes(IEnumerable<IPersistIfcEntity> entities, IEnumerable<string> attrNames, string outputPath = null, string identifier = null)
+        private void DumpAttributes(IEnumerable<IPersistEntity> entities, IEnumerable<string> attrNames, string outputPath = null, string identifier = null)
         {
             if (outputPath == null)
                 ExportCSV(entities, attrNames, null);
@@ -973,13 +940,13 @@ namespace Xbim.Script
                 }
                 catch (Exception)
                 {
-                    
+
                     throw;
                 }
             }
         }
 
-        private void ExportCSV(IEnumerable<IPersistIfcEntity> entities, IEnumerable<string> attrNames, string outputPath = null)
+        private void ExportCSV(IEnumerable<IPersistEntity> entities, IEnumerable<string> attrNames, string outputPath = null)
         {
             TextWriter output = null;
             StringBuilder str = null;
@@ -1041,9 +1008,9 @@ namespace Xbim.Script
             }
         }
 
-        private void ExportXLS(IEnumerable<IPersistIfcEntity> entities, IEnumerable<string> attrNames, string outputPath, string identifier)
+        private void ExportXLS(IEnumerable<IPersistEntity> entities, IEnumerable<string> attrNames, string outputPath, string identifier)
         {
-            if (String.IsNullOrEmpty(outputPath)) 
+            if (String.IsNullOrEmpty(outputPath))
                 throw new ArgumentException();
 
             if (identifier == null)
@@ -1079,7 +1046,7 @@ namespace Xbim.Script
                     cell.SetCellValue(names[i]);
                     cell.CellStyle = headerStyle;
                 }
-                    
+
 
                 //export values
                 var entList = entities.ToList();
@@ -1115,13 +1082,13 @@ namespace Xbim.Script
             }
         }
 
-        private HSSFColor GetColor (HSSFWorkbook workbook, byte red, byte green, byte blue)
+        private HSSFColor GetColor(HSSFWorkbook workbook, byte red, byte green, byte blue)
         {
             HSSFPalette palette = workbook.GetCustomPalette();
             HSSFColor colour = palette.FindSimilarColor(red, green, blue);
             if (colour == null)
             {
-               // NPOI.HSSF.Record.PaletteRecord.STANDARD_PALETTE_SIZE++;
+                // NPOI.HSSF.Record.PaletteRecord.STANDARD_PALETTE_SIZE++;
                 colour = palette.AddColor(red, green, blue);
             }
             return colour;
@@ -1133,7 +1100,7 @@ namespace Xbim.Script
             cellStyle = workbook.CreateCellStyle() as HSSFCellStyle;
 
             HSSFDataFormat dataFormat = workbook.CreateDataFormat() as HSSFDataFormat;
-            
+
 
             if (cellStyle != null)
             {
@@ -1146,7 +1113,7 @@ namespace Xbim.Script
                 //cellStyle.BorderRight = BorderStyle.THIN;
                 //cellStyle.BorderTop = BorderStyle.THIN;
 
-                
+
             }
             return cellStyle;
         }
@@ -1159,14 +1126,14 @@ namespace Xbim.Script
             }
         }
 
-        private int CountEntities(IEnumerable<IPersistIfcEntity> entities)
+        private int CountEntities(IEnumerable<IPersistEntity> entities)
         {
             var result = entities.Count();
             WriteLine(result.ToString());
             return result;
         }
 
-        private double SumEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistIfcEntity> entities)
+        private double SumEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistEntity> entities)
         {
             double sum = double.NaN;
             foreach (var entity in entities)
@@ -1183,7 +1150,7 @@ namespace Xbim.Script
             return sum;
         }
 
-        private double MinEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistIfcEntity> entities)
+        private double MinEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistEntity> entities)
         {
             double min = double.NaN;
             foreach (var entity in entities)
@@ -1191,7 +1158,7 @@ namespace Xbim.Script
                 double value = GetDoubleValue(attrOrPropName, attrType, entity);
                 if (!double.IsNaN(value))
                 {
-                    if (double.IsNaN(min)) 
+                    if (double.IsNaN(min))
                         min = value;
                     else
                         min = Math.Min(value, min);
@@ -1202,7 +1169,7 @@ namespace Xbim.Script
             return min;
         }
 
-        private double MaxEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistIfcEntity> entities)
+        private double MaxEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistEntity> entities)
         {
             double max = double.NaN;
             foreach (var entity in entities)
@@ -1210,7 +1177,7 @@ namespace Xbim.Script
                 double value = GetDoubleValue(attrOrPropName, attrType, entity);
                 if (!double.IsNaN(value))
                 {
-                    if (double.IsNaN(max)) 
+                    if (double.IsNaN(max))
                         max = value;
                     else
                         max = Math.Max(value, max);
@@ -1221,7 +1188,7 @@ namespace Xbim.Script
             return max;
         }
 
-        private double AverageEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistIfcEntity> entities)
+        private double AverageEntities(string attrOrPropName, Tokens attrType, IEnumerable<IPersistEntity> entities)
         {
             double avg = double.NaN;
             foreach (var entity in entities)
@@ -1246,7 +1213,7 @@ namespace Xbim.Script
 
 
 
-        private double GetDoubleValue(string attrOrPropName, Tokens attrType, IPersistIfcEntity entity)
+        private double GetDoubleValue(string attrOrPropName, Tokens attrType, IPersistEntity entity)
         {
             double value = double.NaN;
             switch (attrType)
@@ -1289,9 +1256,9 @@ namespace Xbim.Script
         #endregion
 
         #region Add or remove elements to and from group or type or spatial element
-        private void AddOrRemove(Tokens action, IEnumerable<IPersistIfcEntity> entities, string aggregation)
-        { 
-        //conditions
+        private void AddOrRemove(Tokens action, IEnumerable<IPersistEntity> entities, string aggregation)
+        {
+            //conditions
             if (!Variables.IsDefined(aggregation))
             {
                 Scanner.yyerror("Variable '" + aggregation + "' is not defined and doesn't contain any products.");
@@ -1328,7 +1295,7 @@ namespace Xbim.Script
                 Scanner.yyerror("Only 'group', 'system', 'spatial element' or 'type object' should be in '" + aggregation + "'.");
                 return;
             }
-            
+
             //Action which will be performed
             Action perform = null;
 
@@ -1338,7 +1305,8 @@ namespace Xbim.Script
                 if (objects.Count() != entities.Count())
                     Scanner.yyerror("Only objects which are subtypes of 'IfcRoot' can be assigned to classification '" + aggregation + "'.");
 
-                perform = () => {
+                perform = () =>
+                {
                     foreach (var obj in objects)
                     {
 
@@ -1389,7 +1357,8 @@ namespace Xbim.Script
                 if (objects.Count() != entities.Count())
                     Scanner.yyerror("Only objects which are subtypes of 'IfcObject' can be assigned to 'IfcTypeObject' '" + aggregation + "'.");
 
-                perform = () => {
+                perform = () =>
+                {
                     foreach (var obj in objects)
                     {
                         switch (action)
@@ -1400,7 +1369,8 @@ namespace Xbim.Script
                                 var lSet = typeObject.GetMaterial() as IfcMaterialLayerSet;
                                 if (lSet != null)
                                 {
-                                    var usage = _model.Instances.New<IfcMaterialLayerSetUsage>(u => {
+                                    var usage = _model.Instances.New<IfcMaterialLayerSetUsage>(u =>
+                                    {
                                         u.ForLayerSet = lSet;
                                         u.DirectionSense = IfcDirectionSenseEnum.POSITIVE;
                                         u.LayerSetDirection = IfcLayerSetDirectionEnum.AXIS1;
@@ -1417,9 +1387,9 @@ namespace Xbim.Script
                                 var usage2 = obj.GetMaterial() as IfcMaterialLayerSetUsage;
                                 if (lSet2 != null && usage2 != null && usage2.ForLayerSet == lSet2)
                                 {
-                                    //the best would be to delete usage2 from the model but that is not supported bz the XbimModel at the moment
-                                    var rel2 = _model.Instances.Where<IfcRelAssociatesMaterial>(r => 
-                                            r.RelatingMaterial as IfcMaterialLayerSetUsage == usage2 && 
+                                    //the best would be to delete usage2 from the model but that is not supported bz the IModel at the moment
+                                    var rel2 = _model.Instances.Where<IfcRelAssociatesMaterial>(r =>
+                                            r.RelatingMaterial as IfcMaterialLayerSetUsage == usage2 &&
                                             r.RelatedObjects.Contains(obj)
                                         ).FirstOrDefault();
                                     if (rel2 != null) rel2.RelatedObjects.Remove(obj);
@@ -1486,15 +1456,15 @@ namespace Xbim.Script
             {
                 string ext = Path.GetExtension(path).ToLower();
                 if (ext == ".xbim" || ext == ".xbimf")
-                    _model.Open(path, XbimExtensions.XbimDBAccess.Read,null);
+                    _model.Open(path, XbimExtensions.XbimDBAccess.Read, null);
                 else
-                   _model.CreateFrom(path, null, null, true,true);
+                    _model.CreateFrom(path, null, null, true, true);
                 _model.CacheStart();
                 ModelChanged(_model);
             }
             catch (Exception e)
             {
-                Scanner.yyerror("File '"+path+"' can't be used as an input file. Model was not opened: " + e.Message);
+                Scanner.yyerror("File '" + path + "' can't be used as an input file. Model was not opened: " + e.Message);
             }
         }
 
@@ -1504,7 +1474,7 @@ namespace Xbim.Script
             {
                 _model.Close();
                 _variables.Clear();
-                _model = XbimModel.CreateTemporaryModel();
+                _model = IModel.CreateTemporaryModel();
                 ModelChanged(_model);
             }
             catch (Exception e)
@@ -1512,7 +1482,7 @@ namespace Xbim.Script
 
                 Scanner.yyerror("Model could not have been closed: " + e.Message);
             }
-            
+
         }
 
         public void ValidateModel()
@@ -1546,7 +1516,7 @@ namespace Xbim.Script
             }
             catch (Exception e)
             {
-                Scanner.yyerror("Model was not saved: " + e.Message);   
+                Scanner.yyerror("Model was not saved: " + e.Message);
             }
         }
 
@@ -1563,22 +1533,23 @@ namespace Xbim.Script
         #endregion
 
         #region Objects manipulation
-        private void EvaluateSetExpression(IEnumerable<IPersistIfcEntity> entities, IEnumerable<Expression> expressions)
+        private void EvaluateSetExpression(IEnumerable<IPersistEntity> entities, IEnumerable<Expression> expressions)
         {
-            Action perform = () => {
+            Action perform = () =>
+            {
                 if (entities == null) return;
                 foreach (var expression in expressions)
                 {
                     try
                     {
-                        var action = Expression.Lambda<Action<IPersistIfcEntity>>(expression, _input).Compile();
+                        var action = Expression.Lambda<Action<IPersistEntity>>(expression, _input).Compile();
                         entities.ToList().ForEach(action);
                     }
                     catch (Exception e)
                     {
                         Scanner.yyerror(e.Message);
                     }
-                }    
+                }
             };
 
             if (_model.IsTransacting)
@@ -1617,7 +1588,7 @@ namespace Xbim.Script
             return Expression.Call(thisExpr, evaluateMethod, _input, nameExpr, valExpr);
         }
 
-        private void SetAttributeOrProperty(IPersistIfcEntity input, string attrName, object newVal)
+        private void SetAttributeOrProperty(IPersistEntity input, string attrName, object newVal)
         {
             //try to set attribute as a priority
             var attr = GetAttributeInfo(attrName, input);
@@ -1628,7 +1599,7 @@ namespace Xbim.Script
                 SetProperty(input, attrName, newVal);
         }
 
-        private void SetAttribute(IPersistIfcEntity input, string attrName, object newVal)
+        private void SetAttribute(IPersistEntity input, string attrName, object newVal)
         {
             if (input == null) return;
 
@@ -1636,14 +1607,14 @@ namespace Xbim.Script
             SetValue(attr, input, newVal);
         }
 
-        private void SetProperty(IPersistIfcEntity entity, string name, object newVal)
+        private void SetProperty(IPersistEntity entity, string name, object newVal)
         {
             //try to get existing property
             object pObject = null;
             var pInfo = GetPropertyInfo(name, entity, out pObject);
             if (pInfo != null)
             {
-            SetValue(pInfo, pObject, newVal);
+                SetValue(pInfo, pObject, newVal);
             }
 
             //create new property if no such a property or quantity exists
@@ -1658,30 +1629,228 @@ namespace Xbim.Script
                     name = split[1];
                 }
 
+
                 //prepare potential objects
-                IfcObject obj = entity as IfcObject;
-                IfcTypeObject typeObj = entity as IfcTypeObject;
-                IfcMaterial material = entity as IfcMaterial;
+                var obj = entity as IIfcObjectDefinition;
+                var material = entity as IIfcMaterial;
 
                 //set new property in specified or default property set
                 pSetName = pSetName ?? Defaults.DefaultPSet;
-                IfcValue val = null;
+                var propPath = $"{pSetName}.{name}";
+
+
+                IIfcValue val = null;
                 if (newVal != null)
                     val = CreateIfcValueFromBasicValue(newVal, name);
 
                 if (obj != null)
                 {
-                    obj.SetPropertySingleValue(pSetName, name, val);
+                    SetProperty(obj, propPath, val);
                 }
-                else if (typeObj != null)
-                {
-                    typeObj.SetPropertySingleValue(pSetName, name, val);
-                } 
                 else if (material != null)
                 {
                     material.SetExtendedSingleValue(pSetName, name, val);
                 }
             }
+        }
+
+        public IIfcValue GetProperty(IIfcObjectDefinition objDef, string property)
+        {
+                if (string.IsNullOrWhiteSpace(property))
+                    return null;
+
+                List<IIfcPropertySetDefinition> pSets = null;
+                var obj = objDef as IIfcObject;
+                if (obj != null)
+                    pSets = obj.IsDefinedBy.SelectMany(GetDefinitions).Where(d => d != null).ToList();
+
+                var type = objDef as IIfcTypeObject;
+                if (type != null)
+                    pSets = type.HasPropertySets.ToList();
+
+                var ctx = objDef as IIfcContext;
+                if (ctx != null)
+                    pSets = ctx.IsDefinedBy.SelectMany(GetDefinitions).Where(d => d != null).ToList();
+
+                if (pSets == null || !pSets.Any())
+                    return null;
+
+                var parts = property.Split('.');
+                if (parts.Length == 2)
+                {
+                    pSets = pSets.Where(p => p.Name == parts[0]).ToList();
+                    property = parts[1];
+                }
+
+                var prop =
+                    pSets.OfType<IfcPropertySet>()
+                        .SelectMany(p => p.HasProperties.OfType<IIfcPropertySingleValue>())
+                        .FirstOrDefault(p => p.Name == property);
+                if (prop != null)
+                    return prop.NominalValue;
+
+                var quant = pSets.OfType<IIfcElementQuantity>()
+                        .SelectMany(p => p.Quantities.OfType<IIfcPhysicalSimpleQuantity>())
+                        .FirstOrDefault(p => p.Name == property);
+                if (quant == null)
+                    return null;
+
+                var area = quant as IIfcQuantityArea;
+                if (area != null)
+                    return area.AreaValue;
+                var count = quant as IIfcQuantityCount;
+                if (count != null)
+                    return count.CountValue;
+                var length = quant as IIfcQuantityLength;
+                if (length != null)
+                    return length.LengthValue;
+                var time = quant as IIfcQuantityTime;
+                if (time != null)
+                    return time.TimeValue;
+                var volume = quant as IIfcQuantityVolume;
+                if (volume != null)
+                    return volume.VolumeValue;
+                var weight = quant as IIfcQuantityWeight;
+                if (weight != null)
+                    return weight.WeightValue;
+
+                return null;
+        }
+
+        public void SetProperty(IIfcObjectDefinition objDef, string property, IIfcValue value)
+        {
+            if (string.IsNullOrWhiteSpace(property))
+                throw new ArgumentException(nameof(property));
+
+            List<IIfcPropertySetDefinition> pSets = null;
+            var obj = objDef as IIfcObject;
+            if (obj != null)
+                pSets = obj.IsDefinedBy.SelectMany(GetDefinitions).Where(d => d != null).ToList();
+
+            var type = objDef as IIfcTypeObject;
+            if (type != null)
+                pSets = type.HasPropertySets.ToList();
+
+            var ctx = objDef as IIfcContext;
+            if (ctx != null)
+                pSets = ctx.IsDefinedBy.SelectMany(GetDefinitions).Where(d => d != null).ToList();
+
+            if (pSets == null)
+                pSets = new List<IIfcPropertySetDefinition>();
+
+            var parts = property.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+            string pSetName = null;
+            if (parts.Length == 2)
+            {
+                pSets = pSets.Where(p => p.Name == parts[0]).ToList();
+                property = parts[1];
+                pSetName = parts[0];
+            }
+            if (!pSets.Any())
+            {
+                var pSet = _create.PropertySet(ps => ps.Name = pSetName);
+                if (obj != null)
+                {
+                    _create.RelDefinesByProperties(r =>
+                    {
+                        r.RelatedObjects.Add(obj);
+                        r.RelatingPropertyDefinition = pSet;
+                    });
+                }
+                else if (type != null)
+                {
+                    type.HasPropertySets.Add(pSet);
+                }
+                else if (ctx != null)
+                {
+                    _create.RelDefinesByProperties(r =>
+                    {
+                        r.RelatedObjects.Add(ctx);
+                        r.RelatingPropertyDefinition = pSet;
+                    });
+                }
+            }
+
+
+            var prop =
+                pSets.OfType<IIfcPropertySet>()
+                    .SelectMany(p => p.HasProperties.OfType<IIfcPropertySingleValue>())
+                    .FirstOrDefault(p => p.Name == property);
+            if (prop != null)
+            {
+                prop.NominalValue = value;
+                return;
+            }
+
+            var quant = pSets.OfType<IIfcElementQuantity>()
+                    .SelectMany(p => p.Quantities.OfType<IIfcPhysicalSimpleQuantity>())
+                    .FirstOrDefault(p => p.Name == property);
+            if (quant != null)
+            {
+                var area = quant as IIfcQuantityArea;
+                if (area != null && value is IfcAreaMeasure)
+                {
+                    area.AreaValue = (IfcAreaMeasure)value;
+                    return;
+                }
+                var count = quant as IIfcQuantityCount;
+                if (count != null && value is IfcCountMeasure)
+                {
+                    count.CountValue = (IfcCountMeasure)value;
+                    return;
+                }
+                var length = quant as IIfcQuantityLength;
+                if (length != null && value is IfcLengthMeasure)
+                {
+                    length.LengthValue = (IfcLengthMeasure)value;
+                    return;
+                }
+                var time = quant as IIfcQuantityTime;
+                if (time != null && value is IfcTimeMeasure)
+                {
+                    time.TimeValue = (IfcTimeMeasure)value;
+                    return;
+                }
+                var volume = quant as IIfcQuantityVolume;
+                if (volume != null && value is IfcVolumeMeasure)
+                {
+                    volume.VolumeValue = (IfcVolumeMeasure)value;
+                    return;
+                }
+                var weight = quant as IIfcQuantityWeight;
+                if (weight != null && value is IfcMassMeasure)
+                {
+                    weight.WeightValue = (IfcMassMeasure)value;
+                    return;
+                }
+            }
+
+            prop = _create.PropertySingleValue(p => {
+                p.Name = property;
+                p.NominalValue = value;
+            });
+            pSets
+                .OfType<IIfcPropertySet>()
+                .Where(ps => ps.Name == pSetName)
+                .FirstOrDefault()?
+                .HasProperties
+                .Add(prop);
+        }
+
+        private static IEnumerable<IIfcPropertySetDefinition> GetDefinitions(IIfcRelDefinesByProperties r)
+        {
+            if (r.RelatingPropertyDefinition == null)
+                return null;
+            var defSelect = r.RelatingPropertyDefinition;
+            var def = defSelect as IIfcPropertySetDefinition;
+            if (def != null)
+                return new[] { def };
+            if (defSelect is IfcPropertySetDefinitionSet)
+            {
+                return
+                    ((IfcPropertySetDefinitionSet)defSelect).Value as IEnumerable<IIfcPropertySetDefinition>;
+            }
+            return null;
         }
 
         private void SetValue(PropertyInfo info, object instance, object value)
@@ -1718,9 +1887,9 @@ namespace Xbim.Script
             }
             catch (Exception)
             {
-                throw new Exception("Value "+ (value != null ? value.ToString() : "NULL") +" could not have been set to "+ info.Name + " of type"+ instance.GetType().Name + ". Type should be compatible with " + info.MemberType);
+                throw new Exception("Value " + (value != null ? value.ToString() : "NULL") + " could not have been set to " + info.Name + " of type" + instance.GetType().Name + ". Type should be compatible with " + info.MemberType);
             }
-            
+
         }
 
         private static IfcValue CreateIfcValueFromBasicValue(object value, string propName)
@@ -1753,7 +1922,7 @@ namespace Xbim.Script
                 Scanner.yyerror("There should be only one object in the variable " + materialIdentifier);
                 return Expression.Empty();
             }
-            var material = entities.FirstOrDefault() as IfcMaterialSelect;
+            var material = entities.FirstOrDefault() as IIfcMaterialSelect;
             if (material == null)
             {
                 Scanner.yyerror("There should be exactly one material in the variable " + materialIdentifier);
@@ -1763,53 +1932,55 @@ namespace Xbim.Script
             var materialExpr = Expression.Constant(material);
             var scanExpr = Expression.Constant(Scanner);
 
-            var evaluateMethod = GetType().GetMethod("SetMaterial", BindingFlags.NonPublic|BindingFlags.Static);
+            var evaluateMethod = GetType().GetMethod("SetMaterial", BindingFlags.NonPublic | BindingFlags.Static);
             return Expression.Call(null, evaluateMethod, _input, materialExpr, scanExpr);
         }
 
-        private static void SetMaterial(IPersistIfcEntity entity, IfcMaterialSelect material, AbstractScanner<ValueType, LexLocation> scanner)
+        private void SetMaterial(IPersistEntity entity, IIfcMaterialSelect material)
         {
             if (entity == null || material == null) return;
 
-            var materialSelect = material as IfcMaterialSelect;
+            var materialSelect = material as IIfcMaterialSelect;
             if (materialSelect == null)
             {
-                scanner.yyerror(material.GetType() + " can't be used as a material");
+                Scanner.yyerror(material.GetType() + " can't be used as a material");
                 return;
             }
-            var root = entity as IfcRoot;
+            var root = entity as IIfcRoot;
             if (root == null)
             {
-                scanner.yyerror(root.GetType() + " can't have a material assigned.");
+                Scanner.yyerror(root.GetType() + " can't have a material assigned.");
                 return;
             }
 
 
-            IModel model = material.ModelOf;
-            var matSet = material as IfcMaterialLayerSet;
+            IModel model = material.Model;
+            var matSet = material as IIfcMaterialLayerSet;
             if (matSet != null)
             {
-                var element = root as IfcElement;
+                var element = root as IIfcElement;
                 if (element != null)
                 {
-                    var usage = model.Instances.New<IfcMaterialLayerSetUsage>(mlsu => {
+                    var usage = _create.MaterialLayerSetUsage(mlsu =>
+                    {
                         mlsu.DirectionSense = IfcDirectionSenseEnum.POSITIVE;
                         mlsu.ForLayerSet = matSet;
                         mlsu.LayerSetDirection = IfcLayerSetDirectionEnum.AXIS1;
                         mlsu.OffsetFromReferenceLine = 0;
                     });
-                    var rel = model.Instances.New<IfcRelAssociatesMaterial>(r => {
-                        r.RelatedObjects.Add(root);
+                    var rel = _create.RelAssociatesMaterial(r =>
+                    {
+                        r.RelatedObjects.Add(element);
                         r.RelatingMaterial = usage;
                     });
                     return;
                 }
             }
 
-            var matUsage = material as IfcMaterialLayerSetUsage;
+            var matUsage = material as IIfcMaterialLayerSetUsage;
             if (matUsage != null)
             {
-                var typeElement = root as IfcElementType;
+                var typeElement = root as IIfcElementType;
                 if (typeElement != null)
                 {
                     //change scope to the layer set for the element type. It will be processed in a standard way than
@@ -1817,13 +1988,19 @@ namespace Xbim.Script
                 }
             }
 
+            var def = root as IIfcDefinitionSelect;
+            if (def == null)
+                throw new Exception($"Can't set material to #{root.EntityLabel}={root.ExpressType.ExpressNameUpper}: {root.Name}");
+
             //find existing relation
-            var matRel = model.Instances.Where<IfcRelAssociatesMaterial>(r => r.RelatingMaterial == materialSelect).FirstOrDefault();
+            var matRel = model.Instances.Where<IIfcRelAssociatesMaterial>(r => r.RelatingMaterial == materialSelect).FirstOrDefault();
             if (matRel == null)
                 //create new if none exists
-                matRel = model.Instances.New<IfcRelAssociatesMaterial>(r => r.RelatingMaterial = materialSelect);
+                matRel = _create.RelAssociatesMaterial(r => r.RelatingMaterial = materialSelect);
+
             //insert only if it is not already there
-            if (!matRel.RelatedObjects.Contains(root)) matRel.RelatedObjects.Add(root);
+            if (!matRel.RelatedObjects.Contains(def))
+                matRel.RelatedObjects.Add(def);
 
         }
         #endregion
@@ -1838,7 +2015,7 @@ namespace Xbim.Script
             return Expression.Call(null, evaluateMethod, _input, thickExpr, condExpr);
         }
 
-        private static bool EvaluateThicknessCondition(IPersistIfcEntity input, double thickness, Tokens condition)
+        private static bool EvaluateThicknessCondition(IPersistEntity input, double thickness, Tokens condition)
         {
             IfcRoot root = input as IfcRoot;
             if (input == null) return false;
@@ -1847,7 +2024,7 @@ namespace Xbim.Script
             var materSel = root.GetMaterial();
             IfcMaterialLayerSetUsage usage = materSel as IfcMaterialLayerSetUsage;
             if (usage != null)
-                if (usage.ForLayerSet != null) 
+                if (usage.ForLayerSet != null)
                     value = usage.ForLayerSet.MaterialLayers.Aggregate(0.0, (current, layer) => current + layer.LayerThickness);
             IfcMaterialLayerSet set = materSel as IfcMaterialLayerSet;
             if (set != null)
@@ -1876,7 +2053,7 @@ namespace Xbim.Script
 
         #region Summary
 
-        public void ExportSummary(string path, string format="json")
+        public void ExportSummary(string path, string format = "json")
         {
             if (string.Compare(format, "json", true) == 0)
             {
@@ -1886,7 +2063,7 @@ namespace Xbim.Script
                     using (JsonTextWriter jw = new JsonTextWriter(sw))
                     {
                         JsonSerializer s = JsonSerializer.Create();
-                        s.Serialize(jw, new XbimModelSummary(_model));
+                        s.Serialize(jw, new IModelSummary(_model));
                     }
                 }
             }
@@ -1923,7 +2100,7 @@ namespace Xbim.Script
 
             COBieBuilder builder = new COBieBuilder(context);
             COBieXLSSerialiser serialiser = new COBieXLSSerialiser(outputFile, context.TemplateFileName);
-        
+
             serialiser.Excludes = UserFilters;
             builder.Export(serialiser);
         }
@@ -1948,9 +2125,9 @@ namespace Xbim.Script
         #endregion
 
         #region Group conditions
-        private Expression GenerateGroupCondition(Expression expression) 
+        private Expression GenerateGroupCondition(Expression expression)
         {
-            var function = Expression.Lambda<Func<IPersistIfcEntity, bool>>(expression, _input).Compile();
+            var function = Expression.Lambda<Func<IPersistEntity, bool>>(expression, _input).Compile();
             var fceExpr = Expression.Constant(function);
 
             var evaluateMethod = GetType().GetMethod("EvaluateGroupCondition", BindingFlags.Static | BindingFlags.NonPublic);
@@ -1958,7 +2135,7 @@ namespace Xbim.Script
             return Expression.Call(null, evaluateMethod, _input, fceExpr);
         }
 
-        private static bool EvaluateGroupCondition(IPersistIfcEntity input, Func<IPersistIfcEntity, bool> function)
+        private static bool EvaluateGroupCondition(IPersistEntity input, Func<IPersistEntity, bool> function)
         {
             foreach (var item in GetGroups(input))
             {
@@ -1967,7 +2144,7 @@ namespace Xbim.Script
             return false;
         }
 
-        private static IEnumerable<IfcGroup> GetGroups(IPersistIfcEntity input)
+        private static IEnumerable<IfcGroup> GetGroups(IPersistEntity input)
         {
             IModel model = input.ModelOf;
             var obj = input as IfcObjectDefinition;
@@ -2011,7 +2188,7 @@ namespace Xbim.Script
             return Expression.Call(thisExpr, evaluateMethod, _input, opExpr, condExpr, rightExpr, scanExpr);
         }
 
-        private bool EvaluateSpatialCondition(IPersistIfcEntity input, Tokens op, Tokens condition, IEnumerable<IfcProduct> right)
+        private bool EvaluateSpatialCondition(IPersistEntity input, Tokens op, Tokens condition, IEnumerable<IfcProduct> right)
         {
             IfcProduct left = input as IfcProduct;
             if (left == null)
@@ -2077,14 +2254,14 @@ namespace Xbim.Script
         private RuleCheckResultsManager _ruleChecks = new RuleCheckResultsManager();
         public RuleCheckResultsManager RuleChecks { get { return _ruleChecks; } }
 
-        private void CheckRule(string ruleName, Expression condition, IEnumerable<IPersistIfcEntity> elements)
+        private void CheckRule(string ruleName, Expression condition, IEnumerable<IPersistEntity> elements)
         {
-            var func = Expression.Lambda<Func<IPersistIfcEntity, bool>>(condition, _input).Compile();
+            var func = Expression.Lambda<Func<IPersistEntity, bool>>(condition, _input).Compile();
             foreach (var item in elements)
             {
                 //check the rule
                 var check = func(item);
-                var result = new RuleCheckResult() { Entity = item, IsCompliant = check};
+                var result = new RuleCheckResult() { Entity = item, IsCompliant = check };
                 _ruleChecks.Add(ruleName, result);
 
                 if (!check)
@@ -2094,13 +2271,13 @@ namespace Xbim.Script
 
         private void CheckRule(string ruleName, double valueA, Tokens condition, double valueB)
         {
-                //check the rule
-                var check = CheckDoubleValue(valueA, valueB, condition);
-                var result = new RuleCheckResult() { Entity = null, IsCompliant = check };
-                _ruleChecks.Add(ruleName, result);
+            //check the rule
+            var check = CheckDoubleValue(valueA, valueB, condition);
+            var result = new RuleCheckResult() { Entity = null, IsCompliant = check };
+            _ruleChecks.Add(ruleName, result);
 
-                if (!check)
-                    WriteLine(String.Format("Values don't comply to the rule \"{0}\"", ruleName));
+            if (!check)
+                WriteLine(String.Format("Values don't comply to the rule \"{0}\"", ruleName));
         }
 
         private bool CheckDoubleValue(double valueA, double valueB, Tokens condition)
@@ -2119,13 +2296,13 @@ namespace Xbim.Script
                 case Tokens.OP_LTQ:
                     return valueA <= valueB;
                 case Tokens.OP_EQ:
-                    return Math.Abs( valueA - valueB) < 1E-9;
+                    return Math.Abs(valueA - valueB) < 1E-9;
                 case Tokens.OP_NEQ:
                     return Math.Abs(valueA - valueB) > 1E-9;
                 default:
                     throw new NotImplementedException("Unexpected token value");
             }
-        
+
         }
 
         private void ClearRules()
@@ -2185,7 +2362,7 @@ namespace Xbim.Script
         /// close model from script action
         /// </summary>
         public event ModelChangedHandler OnModelChanged;
-        private void ModelChanged(XbimModel newModel)
+        private void ModelChanged(IModel newModel)
         {
             if (OnModelChanged != null)
                 OnModelChanged(this, new ModelChangedEventArgs(newModel));
@@ -2229,9 +2406,9 @@ namespace Xbim.Script
 
     public class ModelChangedEventArgs : EventArgs
     {
-        private XbimModel _newModel;
-        public XbimModel NewModel { get { return _newModel; } }
-        public ModelChangedEventArgs(XbimModel newModel)
+        private IModel _newModel;
+        public IModel NewModel { get { return _newModel; } }
+        public ModelChangedEventArgs(IModel newModel)
         {
             _newModel = newModel;
         }
@@ -2252,7 +2429,7 @@ namespace Xbim.Script
     #region Rule checking results infrastructure
     public class RuleCheckResult
     {
-        public IPersistIfcEntity Entity { get; set; }
+        public IPersistEntity Entity { get; set; }
         public bool IsCompliant { get; set; }
     }
 
@@ -2274,7 +2451,7 @@ namespace Xbim.Script
         private List<RuleCheckResults> _results = new List<RuleCheckResults>();
         public IEnumerable<RuleCheckResults> Results
         {
-            get 
+            get
             {
                 foreach (var item in _results)
                 {
@@ -2359,7 +2536,7 @@ namespace Xbim.Script
                 HSSFWorkbook workbook = new HSSFWorkbook();
                 ISheet sheet = workbook.CreateSheet("Rule_checking_results");
                 IRow dataRow = sheet.CreateRow(++rowNum);
-                
+
 
                 //write header
                 var cell = dataRow.CreateCell(++cellNum, CellType.String);

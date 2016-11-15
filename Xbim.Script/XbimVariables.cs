@@ -4,28 +4,29 @@ using System.Linq;
 using System.Text;
 using Xbim.XbimExtensions.Interfaces;
 using System.Text.RegularExpressions;
+using Xbim.Common;
 
 namespace Xbim.Script
 {
     public class XbimVariables
     {
 
-        private Dictionary<string, IEnumerable<IPersistIfcEntity>> _data = new Dictionary<string, IEnumerable<IPersistIfcEntity>>();
+        private Dictionary<string, IEnumerable<IPersistEntity>> _data = new Dictionary<string, IEnumerable<IPersistEntity>>();
         private string _lastVariable = null;
         public string LastVariable { get { return _lastVariable; } }
-        public IEnumerable<IPersistIfcEntity> LastEntities
+        public IEnumerable<IPersistEntity> LastEntities
         {
             get 
             {
-                if (_lastVariable == null || !IsDefined(_lastVariable)) return new IPersistIfcEntity[] { };
+                if (_lastVariable == null || !IsDefined(_lastVariable)) return new IPersistEntity[] { };
                 return this[_lastVariable];
             }
         }
         
-        public IEnumerable<IPersistIfcEntity> GetEntities(string variable)
+        public IEnumerable<IPersistEntity> GetEntities(string variable)
         {
             FixVariableName(ref variable);
-            IEnumerable<IPersistIfcEntity> result = new IPersistIfcEntity[] { };
+            IEnumerable<IPersistEntity> result = new IPersistEntity[] { };
             _data.TryGetValue(variable, out result);
             return result;
         }
@@ -46,16 +47,16 @@ namespace Xbim.Script
             return _data.ContainsKey(variable);
         }
 
-        public void Set(string variable, IPersistIfcEntity entity)
+        public void Set(string variable, IPersistEntity entity)
         {
             FixVariableName(ref variable);
             if (entity == null && IsDefined(variable))
                 Clear(variable);
             else
-                Set(variable, new IPersistIfcEntity[] { entity });
+                Set(variable, new IPersistEntity[] { entity });
         }
 
-        public void Set(string variable, IEnumerable<IPersistIfcEntity> entities)
+        public void Set(string variable, IEnumerable<IPersistEntity> entities)
         {
             FixVariableName(ref variable);
             if (IsDefined(variable))
@@ -65,7 +66,7 @@ namespace Xbim.Script
             _lastVariable = variable;
         }
 
-        public void AddEntities(string variable, IEnumerable<IPersistIfcEntity> entities)
+        public void AddEntities(string variable, IEnumerable<IPersistEntity> entities)
         {
             FixVariableName(ref variable);
             if (IsDefined(variable))
@@ -78,7 +79,7 @@ namespace Xbim.Script
             _lastVariable = variable;
         }
 
-        public void RemoveEntities(string variable, IEnumerable<IPersistIfcEntity> entities)
+        public void RemoveEntities(string variable, IEnumerable<IPersistEntity> entities)
         {
             FixVariableName(ref variable);
             if (IsDefined(variable))
@@ -91,7 +92,7 @@ namespace Xbim.Script
             _lastVariable = variable;
         }
 
-        public IEnumerable<IPersistIfcEntity> this[string key]
+        public IEnumerable<IPersistEntity> this[string key]
         {
             get
             {
@@ -99,7 +100,7 @@ namespace Xbim.Script
                 if (_data.ContainsKey(key))
                     return _data[key];
                 else
-                    return new IPersistIfcEntity [] {};
+                    return new IPersistEntity [] {};
             }
         }
 
@@ -112,7 +113,7 @@ namespace Xbim.Script
         {
             FixVariableName(ref identifier);
             if (IsDefined(identifier))
-                _data[identifier] = new IPersistIfcEntity[] { };
+                _data[identifier] = new IPersistEntity[] { };
             else
                 throw new ArgumentException(identifier + " is not defined;");
         }

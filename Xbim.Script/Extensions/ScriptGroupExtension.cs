@@ -64,7 +64,7 @@ namespace Xbim.Script
                 _lastErrors = new List<string>();
                 return new IfcObjectDefinition[] { };
             }
-            var model = group.ModelOf as XbimModel;
+            var model = group.ModelOf as IModel;
             var parser = new XbimQueryParser(model);
             parser.Parse(script);
             _lastErrors = parser.Errors;

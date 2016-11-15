@@ -1,28 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Xbim.XbimExtensions.Interfaces;
 using Xbim.Ifc2x3.ProductExtension;
 using Xbim.Ifc2x3.Extensions;
 using System.IO;
-using Xbim.IO;
 using Xbim.Ifc2x3.ExternalReferenceResource;
+using Xbim.Common;
 
 namespace Xbim.Script
 {
     internal class ClassificationCreator
     {
-        private XbimModel _model;
+        private IModel _model;
 
-        public void CreateSystem(XbimModel model, string classificationName)
+        public void CreateSystem(IModel model, string classificationName)
         {
             //set model in which the systems are to be created
             _model = model;
             string data = null;
 
             //try to get data from resources
-            
+
             //get list of classifications available
             var dir = Directory.EnumerateFiles("Classifications");
             string clasPath = null;
@@ -50,29 +47,16 @@ namespace Xbim.Script
             }
             else
                 parser = new CsvLineParser();
-            
+
 
             //create classification source
-            var action = new Action<XbimModel>(m => {
-                var source = model.Instances.New<IfcClassification>(c =>
-                {
-                    c.Source = clasName;
-                    c.Edition = "Default edition";
-                    c.Name = clasName;
-                });
-                ParseCSV(data, parser, source);
+            var source = model.Instances.New<IfcClassification>(c =>
+            {
+                c.Source = clasName;
+                c.Edition = "Default edition";
+                c.Name = clasName;
             });
-            
-
-            //process file
-            if (_model.IsTransacting)
-                action(_model);
-            else
-                using (var txn = model.BeginTransaction("Systems creation"))
-                {
-                    action(_model);
-                    txn.Commit();
-                }
+            ParseCSV(data, parser, source);
         }
 
         private void ParseCSV(string data, CsvLineParser parser, IfcClassification source)
@@ -140,7 +124,7 @@ namespace Xbim.Script
         private class CsvLineParser
         {
             //settings
-            private char   _separator = ',';
+            private char _separator = ',';
             private string _CodeFieldName = "Code";
             private string _DescriptionFieldName = "Description";
             private string _ParentCodeFieldName = "Parent";
@@ -186,8 +170,8 @@ namespace Xbim.Script
 
                 //get data
                 int colNum = fields.Count();
-                if (codeIndex >= 0 && colNum >= codeIndex+1) result.Code = fields[codeIndex];
-                if (descriptionIndex >= 0 && colNum >= descriptionIndex+1) result.Description = fields[descriptionIndex];
+                if (codeIndex >= 0 && colNum >= codeIndex + 1) result.Code = fields[codeIndex];
+                if (descriptionIndex >= 0 && colNum >= descriptionIndex + 1) result.Description = fields[descriptionIndex];
                 if (parentCodeIndex >= 0 && colNum >= parentCodeIndex + 1) result.ParentCode = fields[parentCodeIndex];
 
                 return result;

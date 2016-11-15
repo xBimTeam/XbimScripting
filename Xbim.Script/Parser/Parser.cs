@@ -15,8 +15,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using QUT.Xbim.Gppg;
-using Xbim.XbimExtensions.Interfaces;
 using System.Linq.Expressions;
+using Xbim.Common;
 
 namespace Xbim.Script
 {
@@ -51,7 +51,7 @@ internal partial struct ValueType
 #line 20 "Parser.y"
 		public Type typeVal;
 #line 21 "Parser.y"
-		public IEnumerable<IPersistIfcEntity> entities;
+		public IEnumerable<IPersistEntity> entities;
 #line 22 "Parser.y"
 		public object val;
 #line 23 "Parser.y"
@@ -727,7 +727,7 @@ internal partial class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 44: // selection -> SELECT, selection_statement
 #line 199 "Parser.y"
-{Variables.Set("$$", ((IEnumerable<IPersistIfcEntity>)(ValueStack[ValueStack.Depth-1].val)));}
+{Variables.Set("$$", ((IEnumerable<IPersistEntity>)(ValueStack[ValueStack.Depth-1].val)));}
         break;
       case 45: // selection -> IDENTIFIER, op_bool, selection_statement
 #line 200 "Parser.y"
@@ -755,11 +755,11 @@ internal partial class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 51: // element_set -> selection_statement
 #line 212 "Parser.y"
-{CurrentSemanticValue.entities = (IEnumerable<IPersistIfcEntity>)(ValueStack[ValueStack.Depth-1].val); }
+{CurrentSemanticValue.entities = (IEnumerable<IPersistEntity>)(ValueStack[ValueStack.Depth-1].val); }
         break;
       case 52: // creation -> CREATE, creation_statement
 #line 216 "Parser.y"
-{Variables.Set("$$", ((IPersistIfcEntity)(ValueStack[ValueStack.Depth-1].val)));}
+{Variables.Set("$$", ((IPersistEntity)(ValueStack[ValueStack.Depth-1].val)));}
         break;
       case 53: // creation -> CREATE, CLASSIFICATION, STRING
 #line 217 "Parser.y"
@@ -767,7 +767,7 @@ internal partial class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 54: // creation -> IDENTIFIER, OP_EQ, creation_statement
 #line 218 "Parser.y"
-{Variables.Set(ValueStack[ValueStack.Depth-3].strVal, ((IPersistIfcEntity)(ValueStack[ValueStack.Depth-1].val)));}
+{Variables.Set(ValueStack[ValueStack.Depth-3].strVal, ((IPersistEntity)(ValueStack[ValueStack.Depth-1].val)));}
         break;
       case 55: // creation_statement -> NEW, object, STRING
 #line 222 "Parser.y"
